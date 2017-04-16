@@ -22,7 +22,20 @@ imageDatas = ((imageDatasArr) => {
 //get a random value from section
 const getRangeRandom = (low, high) => Math.floor(Math.random() * (high - low) + low);
 
+const get30DegRandom = () => {
+	return (Math.random() > 0.5 ? '+' : '-' + Math.ceil(Math.random() * 30));
+}
+
 class ImgFigure extends React.Component {
+	handleClick(e) {
+		if (this.props.arrange.isCenter) {
+			this.props.inverse();
+		} else {
+			this.props.center();
+		}
+		e.stopPropagation();
+		e.preventDefault();
+	}
 	render() {
 		let styleObj = {};
 		if (this.props.arrange.pos) {
@@ -31,51 +44,111 @@ class ImgFigure extends React.Component {
 		if (this.props.arrange.isCenter) {
 			styleObj.zIndex = 11;
 		}
+		if (this.props.arrange.rotate) {
+			['MozTransform', 'msTransform', 'WebkitTransform', 'OTransform', 'transform'].map((item) => {
+				styleObj[item] = 'rotate(' + this.props.arrange.rotate + 'deg)';
+			});
+		}
+		let imgFigureClassName = 'img-figure';
+		imgFigureClassName += this.props.arrange.isInverse ? ' is-inverse' : '';
 		return (
-			<figure className="img-figure" style={styleObj}>
+			<figure className={imgFigureClassName} style={styleObj} onClick={this.handleClick.bind(this)}>
 				<img src={this.props.data.imageURL} alt={this.props.data.title}/>
 				<figcaption>
 					<h2 className="img-title">{this.props.data.title}</h2>
+					<div className="img-back" onClick={this.handleClick.bind(this)}>
+			            <p>
+			              {this.props.data.desc}
+			            </p>
+		          	</div>
 				</figcaption>
 			</figure>
 		);
 	}
 }
 
+class ControllerUnit extends React.Component {
+	handleClick(e) {
+		if (!this.props.arrange.isCenter) {
+			this.props.center();
+		} else {
+			this.props.inverse();
+		}
+		e.stopPropagation();
+		e.preventDefault();
+	}
+	render() {
+		let controllerUnitsClassName = "controller-unit";
+		controllerUnitsClassName += (this.props.arrange.isCenter) ? ' is-center' : '';
+		controllerUnitsClassName += (this.props.arrange.isInverse) ? ' is-inverse' : '';
+		return (
+			<span className={controllerUnitsClassName} onClick={this.handleClick.bind(this)}></span>
+		);
+	}
+}
+
+
 class GalleryByReactApp extends React.Component {
 	constructor(props) {
-			super(props);
-			this.Constant = {
-				centerPos: {
-					left: 0,
-					right: 0
+		super(props);
+		this.Constant = {
+			centerPos: {
+				left: 0,
+				right: 0
+			},
+			hPosRange: { //horizontal scope
+				leftSecX: [0, 0],
+				rightSecX: [0, 0],
+				y: [0, 0]
+			},
+			vPosRange: { //vertical scope
+				x: [0, 0],
+				topY: [0, 0]
+			}
+		};
+		this.state = {
+			imgsArrangeArr: [{
+				pos: {
+					left: '0',
+					top: '0'
 				},
-				hPosRange: { //horizontal scope
-					leftSecX: [0, 0],
-					rightSecX: [0, 0],
-					y: [0, 0]
-				},
-				vPosRange: { //vertical scope
-					x: [0, 0],
-					topY: [0, 0]
-				}
-			};
-			this.state = {
-				imgsArrangeArr: [{
-					pos: {
-						left: '0',
-						top: '0'
-					},
-					//rotate:0, //旋转角度
-					//isInverse:false //正反面
-					isCenter: false
-				}]
-			};
-		}
-		/*
-		 * rearrange all images position
-		 * @param centerIndex assgin the image whcih need to be center.
-		 */
+				rotate: 0, //旋转角度
+				isInverse: false, //正反面
+				isCenter: false
+			}]
+		};
+	}
+
+	/*
+	 *
+	 *
+	 *
+	 */
+	inverse(index) {
+		return function() {
+			let imgsArrangeArr = this.state.imgsArrangeArr;
+			imgsArrangeArr[index].isInverse = !imgsArrangeArr[index].isInverse; // 翻转取反
+			this.setState({
+				imgsArrangeArr: imgsArrangeArr // 触发视图的重新渲染
+			});
+		}.bind(this);
+	}
+
+	/*
+	 *
+	 *
+	 *
+	 */
+	center(index) {
+		return function() {
+			this.rearrange(index);
+		}.bind(this);
+	}
+
+	/*
+	 * rearrange all images position
+	 * @param centerIndex assgin the image whcih need to be center.
+	 */
 	rearrange(centerIndex) {
 		let imgsArrangeArr = this.state.imgsArrangeArr,
 			Constant = this.Constant,
@@ -94,7 +167,7 @@ class GalleryByReactApp extends React.Component {
 		//首先居中centerIndex图片 ,centerIndex图片不需要旋转
 		imgsArrangeCenterArr[0] = {
 			pos: centerPos,
-			// rotate: 0,
+			rotate: 0,
 			isCenter: true
 		}
 
@@ -108,9 +181,8 @@ class GalleryByReactApp extends React.Component {
 					top: getRangeRandom(vPosRangeTopY[0], vPosRangeTopY[1]),
 					left: getRangeRandom(vPosRangeX[0], vPosRangeX[1])
 				},
-				// rotate: get30DegRandom(),
+				rotate: get30DegRandom(),
 				isCenter: false
-
 			};
 		});
 
@@ -128,7 +200,7 @@ class GalleryByReactApp extends React.Component {
 					top: getRangeRandom(hPosRangeY[0], hPosRangeY[1]),
 					left: getRangeRandom(hPosRangeLORX[0], hPosRangeLORX[1])
 				},
-				// rotate: get30DegRandom(),
+				rotate: get30DegRandom(),
 				isCenter: false
 			};
 		}
@@ -156,9 +228,6 @@ class GalleryByReactApp extends React.Component {
 
 			halfImgW = Math.ceil(imgW / 2),
 			halfImgH = Math.ceil(imgH / 2);
-
-		console.log(window.aaa = stageDOM.scrollHeight);
-		console.log(window.bbb = imgFigureDOM.scrollHeight);
 
 		this.Constant.centerPos = {
 			left: halfStageW - halfImgW,
@@ -188,7 +257,6 @@ class GalleryByReactApp extends React.Component {
 	render() {
 		let controllerUnits = [],
 			imgFigures = [];
-		console.log(imageDatas);
 		imageDatas.forEach((value, index) => {
 			if (!this.state.imgsArrangeArr[index]) {
 				this.state.imgsArrangeArr[index] = {
@@ -196,14 +264,13 @@ class GalleryByReactApp extends React.Component {
 						left: 0,
 						top: 0
 					},
-					// ,
-					// rotate: 0,
-					// isInverse: false,
+					rotate: 0,
+					isInverse: false,
 					isCenter: false
 				}
 			}
-			imgFigures.push(<ImgFigure data={value} key={index} ref={'imgFigure'+index}
-                                 arrange={this.state.imgsArrangeArr[index]}/>);
+			imgFigures.push(<ImgFigure data={value} key={index} ref={'imgFigure'+index} arrange={this.state.imgsArrangeArr[index]} inverse={this.inverse(index)} center={this.center(index).bind(this)}/>);
+			controllerUnits.push(<ControllerUnit key={index} arrange={this.state.imgsArrangeArr[index]} inverse={this.inverse(index)} center={this.center(index).bind(this)}/>);
 		});
 		return (
 			<section className="stage" ref="stage">
