@@ -250,8 +250,8 @@ class GalleryByReactApp extends React.Component {
 		this.Constant.vPosRange.x[0] = halfStageW - imgW;
 		this.Constant.vPosRange.x[1] = halfStageW;
 
-		//let num = Math.floor(Math.random() * 10);
-		this.rearrange(0);
+		let num = Math.floor(Math.random() * 10);
+		this.rearrange(num);
 
 	}
 	render() {
